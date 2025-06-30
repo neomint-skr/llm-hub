@@ -1,0 +1,44 @@
+# Basic Python Linting Configuration
+# Compatible with flake8, black, and isort
+
+python:
+  version: "3.11"
+  
+linting:
+  # Line length
+  max_line_length: 88
+  
+  # Import organization
+  import_order: "isort"
+  
+  # Code formatting
+  formatter: "black"
+  
+  # Basic rules
+  rules:
+    - "E501"  # Line too long (handled by black)
+    - "W503"  # Line break before binary operator
+    - "E203"  # Whitespace before ':'
+  
+  # Ignore patterns
+  ignore:
+    - "__pycache__"
+    - "*.pyc"
+    - ".venv"
+    - "build"
+    - "dist"
+  
+  # Include patterns
+  include:
+    - "platform/**/*.py"
+    - "units/**/*.py"
+    - "ops/**/*.py"
+
+# File encoding
+encoding: "utf-8"
+
+# Exclude directories
+exclude:
+  - "temp/"
+  - ".git/"
+  - "__pycache__/"

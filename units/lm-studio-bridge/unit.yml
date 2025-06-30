@@ -1,0 +1,49 @@
+id: "lm-studio-bridge"
+version: "1.0.0"
+type: "mcp-service"
+description: "MCP Bridge for LM Studio integration"
+
+contracts:
+  exposes:
+    - "lm-bridge.v1"
+  consumes:
+    - "discovery.v1"
+
+entrypoint: "./start.sh"
+
+mcp:
+  enabled: true
+  sdk: "python"
+  spec_version: "2025-06-18"
+
+discovery:
+  enabled: true
+  health_check_interval: 30
+
+runtime:
+  platform: "python"
+  version: "3.11"
+  
+dependencies:
+  - "mcp>=1.0.0"
+  - "fastmcp>=2.0.0"
+  - "httpx>=0.25.0"
+  - "pydantic>=2.0.0"
+  - "uvicorn>=0.24.0"
+
+ports:
+  mcp: 3000
+
+environment:
+  required:
+    - "LM_STUDIO_URL"
+  optional:
+    - "MCP_PORT"
+    - "POLL_INTERVAL"
+    - "LOG_LEVEL"
+
+health_check:
+  path: "/health"
+  interval: 30
+  timeout: 10
+  retries: 3

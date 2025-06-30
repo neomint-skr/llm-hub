@@ -1,0 +1,160 @@
+name: "lm-bridge"
+version: "1.0.0"
+description: "MCP Contract for LM Studio Bridge Service"
+spec_version: "2025-06-18"
+
+endpoints:
+  mcp:
+    context:
+      path: "/mcp/context"
+      method: "GET"
+      description: "Get MCP context information"
+      response:
+        type: "object"
+        properties:
+          service:
+            type: "string"
+          version:
+            type: "string"
+          capabilities:
+            type: "array"
+            items:
+              type: "string"
+    
+    lifecycle:
+      path: "/mcp/lifecycle"
+      method: "POST"
+      description: "Manage service lifecycle"
+      request:
+        type: "object"
+        properties:
+          action:
+            type: "string"
+            enum: ["startup", "ready", "shutdown"]
+        required: ["action"]
+      response:
+        type: "object"
+        properties:
+          status:
+            type: "string"
+          phase:
+            type: "string"
+    
+    tools:
+      path: "/mcp/tools"
+      method: "GET"
+      description: "List available MCP tools"
+      response:
+        type: "object"
+        properties:
+          tools:
+            type: "array"
+            items:
+              type: "object"
+              properties:
+                name:
+                  type: "string"
+                description:
+                  type: "string"
+                parameters:
+                  type: "object"
+    
+    execute:
+      path: "/mcp/tools/{tool_name}"
+      method: "POST"
+      description: "Execute MCP tool"
+      request:
+        type: "object"
+        properties:
+          parameters:
+            type: "object"
+        required: ["parameters"]
+      response:
+        type: "object"
+        properties:
+          result:
+            type: "string"
+          status:
+            type: "string"
+
+  health:
+    path: "/health"
+    method: "GET"
+    description: "Health check endpoint"
+    response:
+      type: "object"
+      properties:
+        status:
+          type: "string"
+          enum: ["healthy", "unhealthy"]
+        service:
+          type: "string"
+        checks:
+          type: "object"
+
+lifecycle:
+  startup:
+    required: true
+    description: "Initialize LM Studio connection"
+  ready:
+    required: true
+    description: "Service ready to accept requests"
+  shutdown:
+    required: true
+    description: "Graceful shutdown"
+
+events:
+  model_discovered:
+    description: "New model discovered in LM Studio"
+    schema:
+      type: "object"
+      properties:
+        model_id:
+          type: "string"
+        model_name:
+          type: "string"
+        capabilities:
+          type: "array"
+          items:
+            type: "string"
+  
+  model_removed:
+    description: "Model removed from LM Studio"
+    schema:
+      type: "object"
+      properties:
+        model_id:
+          type: "string"
+
+tools:
+  inference:
+    description: "Generate text using LM Studio model"
+    parameters:
+      type: "object"
+      properties:
+        prompt:
+          type: "string"
+          description: "Input prompt for generation"
+        model:
+          type: "string"
+          description: "Model identifier"
+        temperature:
+          type: "number"
+          minimum: 0
+          maximum: 2
+          default: 0.7
+        max_tokens:
+          type: "integer"
+          minimum: 1
+          default: 1000
+      required: ["prompt", "model"]
+    
+  list_models:
+    description: "List available models in LM Studio"
+    parameters:
+      type: "object"
+      properties: {}
+
+requirements:
+  mcp_sdk: ">=1.0.0"
+  python: ">=3.11"

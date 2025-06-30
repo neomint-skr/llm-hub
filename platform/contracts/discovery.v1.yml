@@ -1,0 +1,162 @@
+name: "discovery"
+version: "1.0.0"
+description: "Service Discovery Contract for LLM Hub"
+spec_version: "2025-06-18"
+
+service_registry:
+  schema:
+    type: "object"
+    properties:
+      name:
+        type: "string"
+        description: "Service name"
+      version:
+        type: "string"
+        description: "Service version"
+      endpoints:
+        type: "object"
+        properties:
+          base_url:
+            type: "string"
+          health_path:
+            type: "string"
+          mcp_path:
+            type: "string"
+        required: ["base_url", "health_path"]
+      metadata:
+        type: "object"
+        properties:
+          contract_version:
+            type: "string"
+          capabilities:
+            type: "array"
+            items:
+              type: "string"
+    required: ["name", "version", "endpoints"]
+
+health_status:
+  schema:
+    type: "object"
+    properties:
+      status:
+        type: "string"
+        enum: ["healthy", "unhealthy", "unknown"]
+      timestamp:
+        type: "number"
+        description: "Unix timestamp"
+      details:
+        type: "object"
+        properties:
+          checks:
+            type: "object"
+          errors:
+            type: "array"
+            items:
+              type: "string"
+    required: ["status", "timestamp"]
+
+capability_advertisement:
+  schema:
+    type: "object"
+    properties:
+      models:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            id:
+              type: "string"
+            name:
+              type: "string"
+            type:
+              type: "string"
+              enum: ["text", "chat", "embedding"]
+            capabilities:
+              type: "array"
+              items:
+                type: "string"
+      features:
+        type: "array"
+        items:
+          type: "string"
+          enum: ["streaming", "function_calling", "embeddings"]
+      limits:
+        type: "object"
+        properties:
+          max_tokens:
+            type: "integer"
+          rate_limit:
+            type: "integer"
+
+events:
+  service_registered:
+    description: "Service registered in discovery"
+    schema:
+      type: "object"
+      properties:
+        service:
+          $ref: "#/service_registry/schema"
+        timestamp:
+          type: "number"
+  
+  service_deregistered:
+    description: "Service removed from discovery"
+    schema:
+      type: "object"
+      properties:
+        service_name:
+          type: "string"
+        timestamp:
+          type: "number"
+  
+  health_status_changed:
+    description: "Service health status changed"
+    schema:
+      type: "object"
+      properties:
+        service_name:
+          type: "string"
+        old_status:
+          type: "string"
+        new_status:
+          type: "string"
+        timestamp:
+          type: "number"
+  
+  capabilities_updated:
+    description: "Service capabilities updated"
+    schema:
+      type: "object"
+      properties:
+        service_name:
+          type: "string"
+        capabilities:
+          $ref: "#/capability_advertisement/schema"
+        timestamp:
+          type: "number"
+
+update_mechanisms:
+  polling:
+    interval: 30
+    description: "Regular health check polling"
+  
+  push:
+    enabled: true
+    description: "Services push updates on change"
+
+registry_operations:
+  register:
+    description: "Register service in discovery"
+    required_fields: ["name", "version", "endpoints"]
+  
+  deregister:
+    description: "Remove service from discovery"
+    required_fields: ["name"]
+  
+  update_health:
+    description: "Update service health status"
+    required_fields: ["name", "status", "timestamp"]
+  
+  update_capabilities:
+    description: "Update service capabilities"
+    required_fields: ["name", "capabilities"]

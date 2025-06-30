@@ -1,0 +1,19 @@
+{
+  "id": "cmpl-7QyqpwdfhqwajicIEznoc6Q47XAyW",
+  "object": "text_completion",
+  "created": 1699564800,
+  "model": "llama-2-7b-chat",
+  "choices": [
+    {
+      "text": " Hello! I'm an AI assistant created by Anthropic. I'm here to help answer questions, provide information, assist with tasks, and have conversations on a wide variety of topics. How can I help you today?",
+      "index": 0,
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 5,
+    "completion_tokens": 35,
+    "total_tokens": 40
+  }
+}

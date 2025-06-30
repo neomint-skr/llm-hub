@@ -1,0 +1,105 @@
+name: "gateway"
+version: "1.0.0"
+description: "Public Gateway Contract for LLM Hub"
+spec_version: "2025-06-18"
+
+public_endpoint:
+  host: "0.0.0.0"
+  port: 8080
+  protocol: "http"
+
+authentication:
+  type: "bearer_token"
+  header: "Authorization"
+  format: "Bearer {token}"
+  required: true
+
+endpoints:
+  health:
+    path: "/health"
+    method: "GET"
+    description: "Gateway health check"
+    auth_required: false
+    response:
+      type: "object"
+      properties:
+        status:
+          type: "string"
+          enum: ["healthy", "unhealthy"]
+        services:
+          type: "object"
+  
+  tools:
+    path: "/tools"
+    method: "GET"
+    description: "List all available tools from bridges"
+    auth_required: true
+    response:
+      type: "object"
+      properties:
+        tools:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              name:
+                type: "string"
+              service:
+                type: "string"
+              description:
+                type: "string"
+  
+  execute:
+    path: "/tools/{tool_name}"
+    method: "POST"
+    description: "Execute tool via appropriate bridge"
+    auth_required: true
+    request:
+      type: "object"
+      properties:
+        parameters:
+          type: "object"
+      required: ["parameters"]
+    response:
+      type: "object"
+      properties:
+        result:
+          type: "string"
+        service:
+          type: "string"
+        status:
+          type: "string"
+
+routing:
+  rules:
+    - pattern: "/tools/inference"
+      target_service: "lm-bridge"
+      target_path: "/mcp/tools/inference"
+    
+    - pattern: "/tools/list_models"
+      target_service: "lm-bridge"
+      target_path: "/mcp/tools/list_models"
+    
+    - pattern: "/health"
+      target_service: "gateway"
+      target_path: "/health"
+
+consumes:
+  - "lm-bridge.v1"
+
+load_balancing:
+  strategy: "round_robin"
+  health_check_interval: 30
+
+error_handling:
+  timeout: 30
+  retries: 2
+  circuit_breaker:
+    failure_threshold: 5
+    recovery_timeout: 60
+
+cors:
+  enabled: true
+  allowed_origins: ["*"]
+  allowed_methods: ["GET", "POST", "OPTIONS"]
+  allowed_headers: ["Authorization", "Content-Type"]

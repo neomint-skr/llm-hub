@@ -1,0 +1,66 @@
+sdk: "python"
+spec_version: "2025-06-18"
+
+checks:
+  sdk-version:
+    description: "Validate MCP SDK version compatibility"
+    requirement: ">=1.0.0"
+    critical: true
+  
+  exposes-api:
+    description: "Validate all MCP endpoints are exposed"
+    endpoints:
+      - "/mcp/context"
+      - "/mcp/lifecycle"
+      - "/mcp/tools"
+      - "/mcp/tools/inference"
+      - "/mcp/tools/list_models"
+      - "/health"
+    critical: true
+  
+  lifecycle-support:
+    description: "Validate MCP lifecycle phase support"
+    phases:
+      - "startup"
+      - "shutdown"
+      - "healthcheck"
+    critical: true
+  
+  contract-alignment:
+    description: "Validate alignment with lm-bridge.v1 contract"
+    contract: "lm-bridge.v1"
+    validation:
+      - "endpoint_schemas"
+      - "response_formats"
+      - "tool_definitions"
+    critical: true
+  
+  environment-validation:
+    description: "Validate required environment variables"
+    required_vars:
+      - "LM_STUDIO_URL"
+    optional_vars:
+      - "MCP_PORT"
+      - "POLL_INTERVAL"
+      - "LOG_LEVEL"
+    critical: false
+  
+  dependency-check:
+    description: "Validate Python dependencies"
+    dependencies:
+      - "mcp>=1.0.0"
+      - "fastmcp>=2.0.0"
+      - "httpx>=0.25.0"
+      - "pydantic>=2.0.0"
+      - "uvicorn>=0.24.0"
+    critical: true
+
+validation_rules:
+  timeout: 30
+  retry_count: 2
+  fail_fast: false
+
+reporting:
+  format: "json"
+  include_warnings: true
+  verbose: false

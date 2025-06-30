@@ -1,0 +1,57 @@
+version: "3.8"
+
+# LLM Hub Docker Compose Configuration
+# Base structure with network and volume definitions
+
+networks:
+  llm-hub-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  logs:
+    driver: local
+
+# Services will be added here by specific units
+# Example service structure:
+#
+# services:
+#   lm-studio-bridge:
+#     build:
+#       context: ../../units/lm-studio-bridge
+#       dockerfile: Dockerfile
+#     networks:
+#       - llm-hub-net
+#     volumes:
+#       - logs:/app/logs
+#     environment:
+#       - LOG_LEVEL=INFO
+#     ports:
+#       - "3000:3000"
+#     healthcheck:
+#       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 3
+#
+#   gateway:
+#     build:
+#       context: ../../units/gateway
+#       dockerfile: Dockerfile
+#     networks:
+#       - llm-hub-net
+#     volumes:
+#       - logs:/app/logs
+#     environment:
+#       - LOG_LEVEL=INFO
+#     ports:
+#       - "8080:8080"
+#     depends_on:
+#       - lm-studio-bridge
+#     healthcheck:
+#       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 3
