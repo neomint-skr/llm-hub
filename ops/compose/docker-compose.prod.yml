@@ -1,0 +1,237 @@
+version: '3.8'
+
+services:
+  unified-gateway:
+    image: ghcr.io/your-org/llm-hub-unified-gateway:${VERSION:-latest}
+    container_name: unified-gateway-prod
+    restart: unless-stopped
+    networks:
+      - llm-hub-net
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    environment:
+      - API_KEY=${API_KEY}
+      - AUTH_ENABLED=${AUTH_ENABLED:-true}
+      - RATE_LIMIT_PER_MINUTE=${RATE_LIMIT_PER_MINUTE:-60}
+      - BRIDGE_URL=http://lm-studio-bridge:3000
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - SERVICE_NAME=unified-gateway
+    volumes:
+      - gateway-logs:/app/logs
+      - ./config/gateway.prod.yml:/app/config/gateway.yml:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+    user: "1000:1000"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  lm-studio-bridge:
+    image: ghcr.io/your-org/llm-hub-lm-studio-bridge:${VERSION:-latest}
+    container_name: lm-studio-bridge-prod
+    restart: unless-stopped
+    networks:
+      - llm-hub-net
+    ports:
+      - "${MCP_PORT:-3000}:3000"
+    environment:
+      - LM_STUDIO_URL=${LM_STUDIO_URL:-http://host.docker.internal:1234}
+      - POLL_INTERVAL=${POLL_INTERVAL:-30}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - SERVICE_NAME=lm-studio-bridge
+    volumes:
+      - bridge-logs:/app/logs
+      - ./config/bridge.prod.yml:/app/config/bridge.yml:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=50m
+    user: "1000:1000"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      - unified-gateway
+
+  # Optional: Reverse proxy for HTTPS termination
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: llm-hub-nginx-prod
+    restart: unless-stopped
+    networks:
+      - llm-hub-net
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - nginx-logs:/var/log/nginx
+    depends_on:
+      - unified-gateway
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.1'
+        reservations:
+          memory: 64M
+          cpus: '0.05'
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Optional: Log aggregation
+  fluentd:
+    image: fluent/fluentd:v1.16-debian-1
+    container_name: llm-hub-fluentd-prod
+    restart: unless-stopped
+    networks:
+      - llm-hub-net
+    volumes:
+      - ./config/fluentd.prod.conf:/fluentd/etc/fluent.conf:ro
+      - gateway-logs:/var/log/gateway:ro
+      - bridge-logs:/var/log/bridge:ro
+      - nginx-logs:/var/log/nginx:ro
+      - fluentd-logs:/var/log/fluentd
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.1'
+        reservations:
+          memory: 128M
+          cpus: '0.05'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # Optional: Monitoring with Prometheus
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: llm-hub-prometheus-prod
+    restart: unless-stopped
+    networks:
+      - llm-hub-net
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.prod.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+        reservations:
+          memory: 256M
+          cpus: '0.1'
+    security_opt:
+      - no-new-privileges:true
+    user: "65534:65534"
+
+networks:
+  llm-hub-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+    driver_opts:
+      com.docker.network.bridge.name: llm-hub-prod
+
+volumes:
+  gateway-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${LOG_DIR:-./logs}/gateway
+  
+  bridge-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${LOG_DIR:-./logs}/bridge
+  
+  nginx-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${LOG_DIR:-./logs}/nginx
+  
+  fluentd-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${LOG_DIR:-./logs}/fluentd
+  
+  prometheus-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}/prometheus
+
+# Production deployment notes:
+# 1. Set VERSION to specific release tag (e.g., v1.0.0)
+# 2. Configure strong API_KEY
+# 3. Set AUTH_ENABLED=true
+# 4. Configure appropriate resource limits
+# 5. Set up log rotation and monitoring
+# 6. Configure SSL certificates for nginx
+# 7. Set up backup for persistent volumes
+# 8. Configure firewall rules
+# 9. Set up health monitoring alerts
+# 10. Review security settings

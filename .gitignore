@@ -53,3 +53,131 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# =============================================================================
+# ENVIRONMENT AND SECRETS (CRITICAL - Never commit!)
+# =============================================================================
+
+# Environment files
+.env.local
+.env.development
+.env.production
+.env.test
+.env.*.local
+
+# API keys and secrets
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+config/secrets/
+
+# =============================================================================
+# PYTHON EXTENDED
+# =============================================================================
+
+# Testing
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# =============================================================================
+# NODE.JS
+# =============================================================================
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# =============================================================================
+# DOCKER
+# =============================================================================
+
+# Docker development files
+docker-compose.override.yml
+docker-compose.dev.yml
+docker-compose.local.yml
+
+# Docker volumes and data
+docker-data/
+volumes/
+
+# =============================================================================
+# PROJECT SPECIFIC
+# =============================================================================
+
+# LLM Hub specific
+data/
+backups/
+ssl/
+certs/
+
+# Test outputs
+test-results/
+test-reports/
+test-output/
+
+# Local development
+local/
+dev/
+development/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache directories
+.cache/
+cache/
+
+# =============================================================================
+# MONITORING AND OBSERVABILITY
+# =============================================================================
+
+# Prometheus data
+prometheus-data/
+
+# Grafana data
+grafana-data/
+
+# Log aggregation
+fluentd-data/
+elasticsearch-data/

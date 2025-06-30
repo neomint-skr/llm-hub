@@ -1,0 +1,86 @@
+{
+  "name": "llm-hub",
+  "version": "1.0.0",
+  "description": "Zero-Configuration MCP Bridge for LM Studio",
+  "author": "SKR",
+  "organization": "NEOMINT-RESEARCH",
+  "license": "CC-BY-NC-4.0",
+  "created": "2025-01-30",
+  "updated": "2025-01-30",
+  "type": "research-project",
+  "category": "ai-infrastructure",
+  "status": "production",
+  "language": "python",
+  "framework": "fastapi",
+  "architecture": "microservices",
+  "deployment": "docker",
+  "platform": "cross-platform",
+  "keywords": [
+    "llm",
+    "mcp",
+    "model-context-protocol",
+    "lm-studio",
+    "ai",
+    "machine-learning",
+    "bridge",
+    "gateway",
+    "api",
+    "docker",
+    "microservices",
+    "zero-configuration"
+  ],
+  "technologies": {
+    "backend": ["python", "fastapi", "uvicorn"],
+    "containerization": ["docker", "docker-compose"],
+    "protocols": ["http", "mcp", "openai-api"],
+    "monitoring": ["health-checks", "logging"],
+    "testing": ["pytest", "integration-tests"]
+  },
+  "requirements": {
+    "python": ">=3.11",
+    "docker": ">=20.10",
+    "docker-compose": ">=2.0",
+    "lm-studio": ">=0.2.0"
+  },
+  "structure": {
+    "methodology": "dedardf",
+    "units": [
+      "lm-studio-bridge",
+      "unified-gateway"
+    ],
+    "platform": "shared-runtime",
+    "operations": "ops-scripts",
+    "documentation": "docs"
+  },
+  "compliance": {
+    "mcp-specification": "2025-06-18",
+    "dedardf-methodology": "v1.0",
+    "neomint-standards": "2025"
+  },
+  "contact": {
+    "email": "research@neomint.com",
+    "organization": "NEOMINT-RESEARCH"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neomint-research/llm-hub.git",
+    "branch": "main"
+  },
+  "documentation": {
+    "readme": "README.md",
+    "installation": "docs/INSTALL.md",
+    "configuration": "docs/CONFIGURATION.md",
+    "api": "docs/api/MCP-ENDPOINTS.md",
+    "architecture": "docs/architecture/OVERVIEW.md",
+    "troubleshooting": "docs/TROUBLESHOOTING.md",
+    "development": "docs/DEVELOPMENT.md",
+    "contributing": "CONTRIBUTING.md",
+    "license": "LICENSE",
+    "changelog": "CHANGELOG.md"
+  },
+  "validation": {
+    "last-validated": "2025-01-30",
+    "validation-report": "docs/VALIDATION.md",
+    "compliance-status": "passed"
+  }
+}

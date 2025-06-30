@@ -1,0 +1,288 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  lint-and-validate:
+    name: Lint and Validate
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort bandit
+        
+    - name: Lint with flake8
+      run: |
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Exit-zero treats all errors as warnings
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+        
+    - name: Check code formatting with black
+      run: |
+        black --check --diff .
+        
+    - name: Check import sorting with isort
+      run: |
+        isort --check-only --diff .
+        
+    - name: Security check with bandit
+      run: |
+        bandit -r . -f json -o bandit-report.json || true
+        
+    - name: Validate Docker Compose
+      run: |
+        docker-compose -f ops/compose/docker-compose.yml config
+        
+    - name: Validate unit configurations
+      run: |
+        # Check unit.yml files are valid YAML
+        python -c "import yaml; [yaml.safe_load(open(f)) for f in ['units/lm-studio-bridge/unit.yml', 'units/unified-gateway/unit.yml']]"
+
+  test-units:
+    name: Test Units
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        unit: [lm-studio-bridge, unified-gateway]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install unit dependencies
+      run: |
+        cd units/${{ matrix.unit }}
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+        
+    - name: Run unit tests
+      run: |
+        cd units/${{ matrix.unit }}
+        if [ -d tests ]; then
+          python -m pytest tests/ -v --cov=. --cov-report=xml
+        else
+          echo "No tests directory found for ${{ matrix.unit }}"
+        fi
+        
+    - name: Upload coverage to Codecov
+      if: matrix.unit == 'lm-studio-bridge'
+      uses: codecov/codecov-action@v3
+      with:
+        file: units/${{ matrix.unit }}/coverage.xml
+        flags: ${{ matrix.unit }}
+
+  build-images:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [lint-and-validate]
+    strategy:
+      matrix:
+        unit: [lm-studio-bridge, unified-gateway]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: units/${{ matrix.unit }}
+        file: units/${{ matrix.unit }}/Dockerfile
+        push: false
+        tags: llm-hub-${{ matrix.unit }}:test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [build-images]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install test dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install httpx pytest asyncio
+        
+    - name: Start mock LM Studio
+      run: |
+        cd ops/scripts
+        python3 lm-studio-mock.py &
+        echo $! > mock_pid.txt
+        sleep 3
+        
+    - name: Build and start services
+      run: |
+        cd ops/compose
+        cp .env.example .env
+        docker-compose build
+        docker-compose up -d
+        
+    - name: Wait for services to be healthy
+      run: |
+        timeout 120 bash -c 'until curl -f http://localhost:8080/health; do sleep 5; done'
+        timeout 120 bash -c 'until curl -f http://localhost:3000/health; do sleep 5; done'
+        
+    - name: Run integration tests
+      run: |
+        cd ops/scripts
+        export API_KEY=test-key-for-ci
+        python3 inference-test.py
+        python3 error-test.py
+        python3 direct-test.py
+        
+    - name: Run MCP compliance tests
+      run: |
+        cd ops/scripts
+        if [ -f mcp-validate.py ]; then
+          bash mcp-compliance-test.sh
+        else
+          echo "MCP validation script not found, skipping"
+        fi
+        
+    - name: Collect logs on failure
+      if: failure()
+      run: |
+        docker-compose -f ops/compose/docker-compose.yml logs
+        
+    - name: Cleanup
+      if: always()
+      run: |
+        cd ops/compose
+        docker-compose down
+        if [ -f ../scripts/mock_pid.txt ]; then
+          kill $(cat ../scripts/mock_pid.txt) || true
+        fi
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: [build-images]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  documentation-check:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check for broken links
+      uses: gaurav-nelson/github-action-markdown-link-check@v1
+      with:
+        use-quiet-mode: 'yes'
+        use-verbose-mode: 'yes'
+        config-file: '.github/workflows/markdown-link-check-config.json'
+        
+    - name: Validate documentation structure
+      run: |
+        # Check required documentation files exist
+        required_files=(
+          "README.md"
+          "CHANGELOG.md"
+          "LICENSE"
+          "CONTRIBUTING.md"
+          "SECURITY.md"
+          "docs/INSTALL.md"
+          "docs/CONFIGURATION.md"
+          "docs/api/MCP-ENDPOINTS.md"
+          "docs/TROUBLESHOOTING.md"
+        )
+        
+        for file in "${required_files[@]}"; do
+          if [ ! -f "$file" ]; then
+            echo "Missing required file: $file"
+            exit 1
+          fi
+        done
+        
+        echo "All required documentation files present"
+
+  notify-status:
+    name: Notify Status
+    runs-on: ubuntu-latest
+    needs: [lint-and-validate, test-units, build-images, integration-tests, security-scan, documentation-check]
+    if: always()
+    
+    steps:
+    - name: Determine overall status
+      id: status
+      run: |
+        if [[ "${{ needs.lint-and-validate.result }}" == "success" && 
+              "${{ needs.test-units.result }}" == "success" && 
+              "${{ needs.build-images.result }}" == "success" && 
+              "${{ needs.integration-tests.result }}" == "success" && 
+              "${{ needs.security-scan.result }}" == "success" && 
+              "${{ needs.documentation-check.result }}" == "success" ]]; then
+          echo "status=success" >> $GITHUB_OUTPUT
+        else
+          echo "status=failure" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Update commit status
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.repos.createCommitStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            sha: context.sha,
+            state: '${{ steps.status.outputs.status }}',
+            target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            description: 'CI Pipeline',
+            context: 'ci/pipeline'
+          })

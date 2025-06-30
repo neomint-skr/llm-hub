@@ -1,0 +1,53 @@
+id: "unified-gateway"
+version: "1.0.0"
+type: "mcp-service"
+description: "Unified MCP Gateway for service aggregation"
+
+contracts:
+  exposes:
+    - "gateway.v1"
+  consumes:
+    - "lm-bridge.v1"
+    - "discovery.v1"
+
+entrypoint: "./start.sh"
+
+mcp:
+  enabled: true
+  sdk: "python"
+  spec_version: "2025-06-18"
+
+discovery:
+  enabled: true
+  health_check_interval: 30
+
+runtime:
+  platform: "python"
+  version: "3.11"
+
+dependencies:
+  - "mcp>=1.0.0"
+  - "fastmcp>=2.0.0"
+  - "httpx>=0.25.0"
+  - "pydantic>=2.0.0"
+  - "uvicorn>=0.24.0"
+  - "python-multipart>=0.0.6"
+
+ports:
+  public: 8080
+
+environment:
+  required:
+    - "API_KEY"
+    - "BRIDGE_URL"
+  optional:
+    - "GATEWAY_PORT"
+    - "RATE_LIMIT_PER_MINUTE"
+    - "LOG_LEVEL"
+    - "AUTH_ENABLED"
+
+health_check:
+  path: "/health"
+  interval: 30
+  timeout: 10
+  retries: 3

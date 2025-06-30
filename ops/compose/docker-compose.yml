@@ -1,57 +1,302 @@
 version: "3.8"
 
 # LLM Hub Docker Compose Configuration
-# Base structure with network and volume definitions
+# Perfect Orchestration with Startup Sequencing, Health Validation, and Graceful Shutdown
+# Following 4D Methodology: GUTWILLIG, INTELLIGENT, KONTEXT-AWARE, FAUL
 
 networks:
   llm-hub-net:
+    name: llm-hub-network
     driver: bridge
     ipam:
       config:
-        - subnet: 172.20.0.0/16
+        - subnet: 172.25.0.0/16
+    driver_opts:
+      com.docker.network.bridge.name: llm-hub-dev
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.bridge.enable_ip_masquerade: "true"
 
 volumes:
   logs:
+    name: llm-hub-logs
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${LOG_DIR:-./logs}
+
+  shared-state:
+    name: llm-hub-shared-state
     driver: local
 
-# Services will be added here by specific units
-# Example service structure:
-#
-# services:
-#   lm-studio-bridge:
-#     build:
-#       context: ../../units/lm-studio-bridge
-#       dockerfile: Dockerfile
-#     networks:
-#       - llm-hub-net
-#     volumes:
-#       - logs:/app/logs
-#     environment:
-#       - LOG_LEVEL=INFO
-#     ports:
-#       - "3000:3000"
-#     healthcheck:
-#       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-#       interval: 30s
-#       timeout: 10s
-#       retries: 3
-#
-#   gateway:
-#     build:
-#       context: ../../units/gateway
-#       dockerfile: Dockerfile
-#     networks:
-#       - llm-hub-net
-#     volumes:
-#       - logs:/app/logs
-#     environment:
-#       - LOG_LEVEL=INFO
-#     ports:
-#       - "8080:8080"
-#     depends_on:
-#       - lm-studio-bridge
-#     healthcheck:
-#       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-#       interval: 30s
-#       timeout: 10s
-#       retries: 3
+services:
+  # Phase 1: Infrastructure Health Check
+  infrastructure-check:
+    image: alpine:3.18
+    container_name: llm-hub-infrastructure-check
+    labels:
+      - "llm-hub.service=infrastructure-check"
+      - "llm-hub.type=infrastructure"
+      - "llm-hub.phase=1"
+      - "llm-hub.description=Infrastructure readiness validation"
+    networks:
+      - llm-hub-net
+    volumes:
+      - logs:/logs
+      - shared-state:/shared
+    command: |
+      sh -c '
+        echo "🔧 LLM Hub Infrastructure Check Starting..."
+        echo "📁 Validating log directory..."
+        mkdir -p /logs/bridge /logs/gateway /logs/orchestration
+        echo "✅ Log directories created"
+
+        echo "🌐 Validating network connectivity..."
+        ping -c 1 172.25.0.1 >/dev/null 2>&1 && echo "✅ Network connectivity verified" || exit 1
+
+        echo "💾 Validating shared state..."
+        echo "infrastructure_ready=$(date -Iseconds)" > /shared/infrastructure.state
+        echo "✅ Shared state initialized"
+
+        echo "🎯 Infrastructure validation complete"
+        echo "infrastructure_status=ready" > /shared/infrastructure.status
+
+        # Keep container running for dependency validation
+        tail -f /dev/null
+      '
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: '0.1'
+    healthcheck:
+      test: ["CMD", "test", "-f", "/shared/infrastructure.status"]
+      interval: 5s
+      timeout: 3s
+      retries: 2
+      start_period: 10s
+
+  # Phase 2: LM Studio Bridge with Enhanced Health Validation
+  lm-studio-bridge:
+    build:
+      context: ../..
+      dockerfile: units/lm-studio-bridge/Dockerfile
+    container_name: lm-studio-bridge
+    labels:
+      - "llm-hub.service=lm-studio-bridge"
+      - "llm-hub.type=mcp-service"
+      - "llm-hub.version=1.0.0"
+      - "llm-hub.component=bridge"
+      - "llm-hub.phase=2"
+      - "llm-hub.environment=development"
+      - "llm-hub.maintainer=NEOMINT-RESEARCH"
+      - "llm-hub.description=LM Studio MCP Bridge Service with Enhanced Health"
+      - "llm-hub.port.mcp=3000"
+      - "llm-hub.health.endpoint=/health"
+      - "llm-hub.depends.external=lm-studio"
+      - "llm-hub.startup.timeout=60s"
+      - "llm-hub.shutdown.timeout=30s"
+    networks:
+      - llm-hub-net
+    volumes:
+      - logs:/app/logs
+      - shared-state:/shared
+    environment:
+      - LM_STUDIO_URL=${LM_STUDIO_URL:-http://host.docker.internal:1234}
+      - MCP_PORT=${MCP_PORT:-3000}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - SERVICE_NAME=lm-studio-bridge
+      - POLL_INTERVAL=${POLL_INTERVAL:-30}
+      - STARTUP_VALIDATION_ENABLED=true
+      - GRACEFUL_SHUTDOWN_TIMEOUT=25
+      - HEALTH_CHECK_COMPREHENSIVE=true
+    ports:
+      - "3000:3000"
+    depends_on:
+      infrastructure-check:
+        condition: service_healthy
+    restart: unless-stopped
+    stop_grace_period: 30s
+    deploy:
+      resources:
+        limits:
+          # 50% rule: never use more than half of system resources
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3000/health', timeout=5)"]
+      interval: 15s
+      timeout: 10s
+      retries: 4
+      start_period: 45s
+
+  # Phase 3: Unified Gateway with Bridge Dependency Validation
+  unified-gateway:
+    build:
+      context: ../..
+      dockerfile: units/unified-gateway/Dockerfile
+    container_name: unified-gateway
+    labels:
+      - "llm-hub.service=unified-gateway"
+      - "llm-hub.type=mcp-gateway"
+      - "llm-hub.version=1.0.0"
+      - "llm-hub.component=gateway"
+      - "llm-hub.phase=3"
+      - "llm-hub.environment=development"
+      - "llm-hub.maintainer=NEOMINT-RESEARCH"
+      - "llm-hub.description=Unified MCP Gateway with Enhanced Orchestration"
+      - "llm-hub.port.gateway=8080"
+      - "llm-hub.health.endpoint=/health"
+      - "llm-hub.depends.internal=lm-studio-bridge"
+      - "llm-hub.startup.timeout=45s"
+      - "llm-hub.shutdown.timeout=30s"
+    networks:
+      - llm-hub-net
+    volumes:
+      - logs:/app/logs
+      - shared-state:/shared
+    environment:
+      - API_KEY=${API_KEY:-changeme}
+      - BRIDGE_URL=http://lm-studio-bridge:3000
+      - GATEWAY_PORT=${GATEWAY_PORT:-8080}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - SERVICE_NAME=unified-gateway
+      - AUTH_ENABLED=${AUTH_ENABLED:-true}
+      - RATE_LIMIT_PER_MINUTE=${RATE_LIMIT_PER_MINUTE:-60}
+      - STARTUP_VALIDATION_ENABLED=true
+      - BRIDGE_HEALTH_VALIDATION=true
+      - GRACEFUL_SHUTDOWN_TIMEOUT=25
+      - DEPENDENCY_WAIT_TIMEOUT=60
+    ports:
+      - "8080:8080"
+    depends_on:
+      infrastructure-check:
+        condition: service_healthy
+      lm-studio-bridge:
+        condition: service_healthy
+    restart: unless-stopped
+    stop_grace_period: 30s
+    deploy:
+      resources:
+        limits:
+          # 50% rule: never use more than half of system resources
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.1'
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 3
+        window: 120s
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health', timeout=5); urllib.request.urlopen('http://lm-studio-bridge:3000/health', timeout=5)"]
+      interval: 15s
+      timeout: 10s
+      retries: 4
+      start_period: 50s
+
+  # Phase 4: Orchestration Monitor and Health Validator
+  orchestration-monitor:
+    image: alpine:3.18
+    container_name: llm-hub-orchestration-monitor
+    labels:
+      - "llm-hub.service=orchestration-monitor"
+      - "llm-hub.type=monitoring"
+      - "llm-hub.phase=4"
+      - "llm-hub.description=Real-time orchestration monitoring and validation"
+    networks:
+      - llm-hub-net
+    volumes:
+      - logs:/logs
+      - shared-state:/shared
+    environment:
+      - MONITOR_INTERVAL=${MONITOR_INTERVAL:-10}
+      - HEALTH_CHECK_TIMEOUT=5
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      infrastructure-check:
+        condition: service_healthy
+      lm-studio-bridge:
+        condition: service_healthy
+      unified-gateway:
+        condition: service_healthy
+    command: |
+      sh -c '
+        echo "🔍 LLM Hub Orchestration Monitor Starting..."
+
+        # Install required tools
+        apk add --no-cache curl jq
+
+        # Monitor function
+        monitor_services() {
+          while true; do
+            timestamp=$(date -Iseconds)
+            echo "[$timestamp] 🔍 Monitoring LLM Hub Services..."
+
+            # Check Bridge Health
+            if curl -sf http://lm-studio-bridge:3000/health >/dev/null 2>&1; then
+              bridge_status="✅ HEALTHY"
+              echo "bridge_last_healthy=$timestamp" > /shared/bridge.status
+            else
+              bridge_status="❌ UNHEALTHY"
+              echo "bridge_last_unhealthy=$timestamp" > /shared/bridge.status
+            fi
+
+            # Check Gateway Health
+            if curl -sf http://unified-gateway:8080/health >/dev/null 2>&1; then
+              gateway_status="✅ HEALTHY"
+              echo "gateway_last_healthy=$timestamp" > /shared/gateway.status
+            else
+              gateway_status="❌ UNHEALTHY"
+              echo "gateway_last_unhealthy=$timestamp" > /shared/gateway.status
+            fi
+
+            # Log status
+            echo "[$timestamp] Bridge: $bridge_status | Gateway: $gateway_status" | tee -a /logs/orchestration/monitor.log
+
+            # Update orchestration status
+            if [ "$bridge_status" = "✅ HEALTHY" ] && [ "$gateway_status" = "✅ HEALTHY" ]; then
+              echo "orchestration_status=healthy" > /shared/orchestration.status
+              echo "orchestration_last_healthy=$timestamp" >> /shared/orchestration.status
+            else
+              echo "orchestration_status=degraded" > /shared/orchestration.status
+              echo "orchestration_last_degraded=$timestamp" >> /shared/orchestration.status
+            fi
+
+            sleep ${MONITOR_INTERVAL:-10}
+          done
+        }
+
+        # Start monitoring
+        monitor_services &
+        MONITOR_PID=$!
+
+        # Handle shutdown gracefully
+        trap "echo \"🛑 Orchestration monitor shutting down...\"; kill $MONITOR_PID 2>/dev/null; exit 0" TERM INT
+
+        # Keep running
+        wait $MONITOR_PID
+      '
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.1'
+    healthcheck:
+      test: ["CMD", "test", "-f", "/shared/orchestration.status"]
+      interval: 30s
+      timeout: 5s
+      retries: 2
+      start_period: 15s

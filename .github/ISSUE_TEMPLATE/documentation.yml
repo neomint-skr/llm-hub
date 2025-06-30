@@ -1,0 +1,152 @@
+name: Documentation Issue
+description: Report missing, incorrect, or unclear documentation
+title: "[Docs]: "
+labels: ["documentation", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve our documentation! Please provide details about the documentation issue.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      description: Please confirm you have completed these steps
+      options:
+        - label: I have searched existing issues to ensure this hasn't been reported
+          required: true
+        - label: I have checked the latest version of the documentation
+          required: true
+
+  - type: dropdown
+    id: issue_type
+    attributes:
+      label: Documentation Issue Type
+      description: What type of documentation issue is this?
+      options:
+        - Missing documentation
+        - Incorrect information
+        - Unclear or confusing content
+        - Outdated information
+        - Broken links
+        - Formatting issues
+        - Translation issues
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: location
+    attributes:
+      label: Documentation Location
+      description: Where is the documentation issue located?
+      placeholder: |
+        - File: docs/INSTALL.md
+        - Section: "Step 3: Download LLM Hub"
+        - URL: https://github.com/your-org/llm-hub/blob/main/docs/INSTALL.md#step-3
+        - Line numbers: 45-50
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_content
+    attributes:
+      label: Current Content
+      description: What does the documentation currently say?
+      placeholder: |
+        Copy the current text that has issues, or describe what's missing.
+        Use quotes for exact text.
+
+  - type: textarea
+    id: issue_description
+    attributes:
+      label: Issue Description
+      description: What's wrong with the current documentation?
+      placeholder: |
+        - What is confusing or incorrect?
+        - What information is missing?
+        - How does this affect users?
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggested_improvement
+    attributes:
+      label: Suggested Improvement
+      description: How should the documentation be improved?
+      placeholder: |
+        - What should the corrected text say?
+        - What additional information should be included?
+        - How could this be made clearer?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: audience
+    attributes:
+      label: Target Audience
+      description: Who is affected by this documentation issue?
+      options:
+        - New users
+        - Experienced users
+        - Developers/Contributors
+        - System administrators
+        - All users
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is fixing this documentation?
+      options:
+        - Critical (blocks user success)
+        - High (causes significant confusion)
+        - Medium (minor confusion or improvement)
+        - Low (nice to have)
+    validations:
+      required: true
+
+  - type: textarea
+    id: user_impact
+    attributes:
+      label: User Impact
+      description: How does this documentation issue affect users?
+      placeholder: |
+        - What problems does this cause for users?
+        - What workflows are affected?
+        - How did you discover this issue?
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other relevant information
+      placeholder: |
+        - Screenshots of confusing sections
+        - Examples of better documentation
+        - Related issues or discussions
+        - Your experience level with the project
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      description: Are you willing to help improve this documentation?
+      options:
+        - label: I would be willing to submit a pull request to fix this
+        - label: I would be willing to review proposed changes
+        - label: I would be willing to test updated documentation
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

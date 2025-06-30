@@ -1,0 +1,185 @@
+name: Feature Request
+description: Suggest a new feature or enhancement for LLM Hub
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a new feature! Please provide detailed information to help us understand your request.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      description: Please confirm you have completed these steps
+      options:
+        - label: I have searched existing issues to ensure this feature hasn't been requested
+          required: true
+        - label: I have read the [Development Guide](https://github.com/your-org/llm-hub/blob/main/docs/DEVELOPMENT.md)
+          required: true
+        - label: This feature aligns with the project's goals and scope
+          required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Feature Summary
+      description: A brief summary of the feature you'd like to see
+      placeholder: One-sentence description of the feature
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve?
+      placeholder: |
+        Describe the problem or limitation you're experiencing.
+        Is your feature request related to a problem? Please describe.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like to see
+      placeholder: |
+        A clear and concise description of what you want to happen.
+        How should this feature work?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Alternative solutions or features you've considered
+      placeholder: |
+        Describe any alternative solutions or features you've considered.
+        Why is your proposed solution better?
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which component would this feature affect?
+      options:
+        - Gateway (unified-gateway)
+        - Bridge (lm-studio-bridge)
+        - Platform Core
+        - Docker Compose
+        - Documentation
+        - Tests
+        - Multiple Components
+        - New Component
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Critical (blocking current work)
+        - High (would significantly improve workflow)
+        - Medium (nice to have)
+        - Low (minor improvement)
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: feature_type
+    attributes:
+      label: Feature Type
+      description: What type of feature is this? (Select all that apply)
+      options:
+        - label: New API endpoint
+        - label: Performance improvement
+        - label: Security enhancement
+        - label: Developer experience improvement
+        - label: Configuration option
+        - label: Integration with external service
+        - label: UI/UX improvement
+        - label: Documentation improvement
+
+  - type: textarea
+    id: use_cases
+    attributes:
+      label: Use Cases
+      description: Specific use cases for this feature
+      placeholder: |
+        1. As a [user type], I want to [action] so that [benefit]
+        2. When [scenario], this feature would [outcome]
+        3. This would help with [specific workflow/problem]
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What would make this feature complete?
+      placeholder: |
+        - [ ] Feature does X
+        - [ ] Feature handles Y scenario
+        - [ ] Documentation is updated
+        - [ ] Tests are included
+
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation Ideas
+      description: Any ideas about how this could be implemented?
+      placeholder: |
+        If you have technical ideas about implementation:
+        - API design suggestions
+        - Architecture considerations
+        - Technology choices
+        - Integration points
+
+  - type: textarea
+    id: breaking_changes
+    attributes:
+      label: Breaking Changes
+      description: Would this feature introduce any breaking changes?
+      placeholder: |
+        - Would this change existing APIs?
+        - Would this require configuration changes?
+        - Would this affect backward compatibility?
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other context about the feature request
+      placeholder: |
+        - Links to relevant documentation
+        - Examples from other projects
+        - Screenshots or mockups
+        - Related issues or discussions
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      description: Are you willing to contribute to this feature?
+      options:
+        - label: I would be willing to implement this feature
+        - label: I would be willing to help with testing
+        - label: I would be willing to help with documentation
+        - label: I would be willing to provide feedback during development
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

@@ -1,0 +1,172 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  validate-release:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Determine version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          VERSION="${{ github.event.inputs.version }}"
+        else
+          VERSION="${GITHUB_REF#refs/tags/}"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Release version: $VERSION"
+        
+    - name: Validate version format
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+        if [[ ! $VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "Invalid version format: $VERSION"
+          echo "Expected format: v1.0.0"
+          exit 1
+        fi
+        
+    - name: Check CHANGELOG
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+        if ! grep -q "## \[${VERSION#v}\]" CHANGELOG.md; then
+          echo "Version ${VERSION#v} not found in CHANGELOG.md"
+          exit 1
+        fi
+
+  build-and-push-images:
+    name: Build and Push Images
+    runs-on: ubuntu-latest
+    needs: validate-release
+    strategy:
+      matrix:
+        unit: [lm-studio-bridge, unified-gateway]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.unit }}
+        tags: |
+          type=ref,event=tag
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}}
+          
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: units/${{ matrix.unit }}
+        file: units/${{ matrix.unit }}/Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [validate-release, build-and-push-images]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Extract changelog
+      id: changelog
+      run: |
+        VERSION="${{ needs.validate-release.outputs.version }}"
+        VERSION_NUMBER="${VERSION#v}"
+        
+        # Extract changelog section for this version
+        awk "/## \[$VERSION_NUMBER\]/{flag=1; next} /## \[/{flag=0} flag" CHANGELOG.md > release_notes.md
+        
+        # If release notes are empty, create a basic one
+        if [ ! -s release_notes.md ]; then
+          echo "Release $VERSION" > release_notes.md
+          echo "" >> release_notes.md
+          echo "See [CHANGELOG.md](CHANGELOG.md) for details." >> release_notes.md
+        fi
+        
+    - name: Create release archive
+      run: |
+        VERSION="${{ needs.validate-release.outputs.version }}"
+        
+        # Create source archive excluding development files
+        tar -czf llm-hub-$VERSION-source.tar.gz \
+          --exclude='.git*' \
+          --exclude='*.pyc' \
+          --exclude='__pycache__' \
+          --exclude='.pytest_cache' \
+          --exclude='node_modules' \
+          --exclude='.env*' \
+          --exclude='*.log' \
+          .
+          
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ needs.validate-release.outputs.version }}
+        name: Release ${{ needs.validate-release.outputs.version }}
+        body_path: release_notes.md
+        files: |
+          llm-hub-${{ needs.validate-release.outputs.version }}-source.tar.gz
+        draft: false
+        prerelease: ${{ contains(needs.validate-release.outputs.version, '-') }}
+
+  notify-release:
+    name: Notify Release
+    runs-on: ubuntu-latest
+    needs: [create-release]
+    if: always()
+    
+    steps:
+    - name: Notify success
+      if: needs.create-release.result == 'success'
+      run: |
+        echo "✅ Release ${{ needs.validate-release.outputs.version }} created successfully!"
+        echo "🐳 Docker images pushed to ${{ env.REGISTRY }}"
+        echo "📦 Release artifacts available on GitHub"
+        
+    - name: Notify failure
+      if: needs.create-release.result == 'failure'
+      run: |
+        echo "❌ Release ${{ needs.validate-release.outputs.version }} failed!"
+        echo "Check the workflow logs for details."
+        exit 1

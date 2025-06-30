@@ -1,0 +1,51 @@
+sdk: "python"
+spec_version: "2025-06-18"
+
+checks:
+  public-endpoint:
+    description: "Validate public endpoint accessibility on port 8080"
+    requirement: "port 8080 accessible"
+    critical: true
+  
+  bearer-auth:
+    description: "Validate bearer token authentication required"
+    requirement: "Authorization header required"
+    critical: true
+  
+  service-discovery:
+    description: "Validate service discovery enabled"
+    requirement: "discovery client active"
+    critical: true
+  
+  aggregation-support:
+    description: "Validate tool aggregation support"
+    requirement: "multi-service routing enabled"
+    critical: true
+  
+  rate-limiting:
+    description: "Validate rate limiting configured"
+    requirement: "rate limits per token configured"
+    critical: false
+
+  gateway-endpoints:
+    description: "Validate all gateway endpoints are exposed"
+    endpoints:
+      - "/health"
+      - "/tools/{tool_name}"
+      - "/services"
+      - "/discovery"
+    critical: true
+  
+  contract-alignment:
+    description: "Validate alignment with gateway.v1 contract"
+    contract: "gateway.v1"
+    validation:
+      - "endpoint_schemas"
+      - "response_formats"
+      - "routing_rules"
+    critical: true
+
+  load-balancing:
+    description: "Validate load balancing functionality"
+    requirement: "round-robin routing implemented"
+    critical: false

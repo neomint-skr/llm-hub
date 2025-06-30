@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Hub Predictive Maintenance Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .status-healthy { background: #4CAF50; }
+        .status-warning { background: #FF9800; }
+        .status-critical { background: #f44336; }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .metric-value {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .trend-chart {
+            height: 100px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-style: italic;
+        }
+
+        .prediction-item {
+            background: #f8f9fa;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px 0;
+            border-left: 4px solid #2196F3;
+        }
+
+        .prediction-item.warning {
+            border-left-color: #FF9800;
+            background: #fff3e0;
+        }
+
+        .prediction-item.critical {
+            border-left-color: #f44336;
+            background: #ffebee;
+        }
+
+        .action-log {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        .log-entry {
+            font-family: monospace;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            color: #666;
+        }
+
+        .log-entry.action {
+            color: #2196F3;
+        }
+
+        .log-entry.warning {
+            color: #FF9800;
+        }
+
+        .refresh-button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 10px 0;
+        }
+
+        .refresh-button:hover {
+            background: #1976D2;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔮 Predictive Maintenance Dashboard</h1>
+            <p>Preventing problems before they happen</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- System Health Overview -->
+            <div class="card">
+                <h3>
+                    <span class="status-indicator" id="overall-status"></span>
+                    System Health Overview
+                </h3>
+                <div class="metric">
+                    <span class="metric-label">Monitoring Status</span>
+                    <span class="metric-value" id="monitoring-status">Checking...</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Data Points Collected</span>
+                    <span class="metric-value" id="data-points">0</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Last Analysis</span>
+                    <span class="metric-value" id="last-analysis">Never</span>
+                </div>
+                <button class="refresh-button" onclick="refreshDashboard()">Refresh Data</button>
+            </div>
+
+            <!-- Resource Trends -->
+            <div class="card">
+                <h3>📈 Resource Trends</h3>
+                <div class="metric">
+                    <span class="metric-label">Memory Growth</span>
+                    <span class="metric-value" id="memory-trend">0.0%/hour</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">CPU Trend</span>
+                    <span class="metric-value" id="cpu-trend">0.0%/hour</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Disk Growth</span>
+                    <span class="metric-value" id="disk-trend">0.0%/day</span>
+                </div>
+                <div class="trend-chart">
+                    📊 Trend visualization would appear here
+                </div>
+            </div>
+
+            <!-- Predictions & Alerts -->
+            <div class="card">
+                <h3>🚨 Predictions & Alerts</h3>
+                <div id="predictions-container">
+                    <div class="prediction-item">
+                        <strong>No active predictions</strong><br>
+                        System is operating within normal parameters
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Patterns -->
+            <div class="card">
+                <h3>⚠️ Error Patterns</h3>
+                <div class="metric">
+                    <span class="metric-label">Errors (Last Hour)</span>
+                    <span class="metric-value" id="error-count">0</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Error Threshold</span>
+                    <span class="metric-value" id="error-threshold">3/hour</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Pattern Status</span>
+                    <span class="metric-value" id="pattern-status">Normal</span>
+                </div>
+            </div>
+
+            <!-- Maintenance Actions -->
+            <div class="card">
+                <h3>🔧 Maintenance Actions</h3>
+                <div class="metric">
+                    <span class="metric-label">Last Cleanup</span>
+                    <span class="metric-value" id="last-cleanup">Never</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Cleanup Cooldown</span>
+                    <span class="metric-value" id="cleanup-cooldown">Ready</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Actions Performed</span>
+                    <span class="metric-value" id="actions-performed">0</span>
+                </div>
+            </div>
+
+            <!-- Action Log -->
+            <div class="card">
+                <h3>📋 Recent Actions</h3>
+                <div class="action-log" id="action-log">
+                    <div class="log-entry">System initialized - monitoring started</div>
+                    <div class="log-entry">Predictive maintenance active</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class PredictiveDashboard {
+            constructor() {
+                this.bridgeUrl = 'http://localhost:3000';
+                this.lastUpdate = 0;
+                this.actionLog = [];
+                
+                this.init();
+            }
+
+            init() {
+                this.refreshDashboard();
+                // Auto-refresh every 30 seconds
+                setInterval(() => this.refreshDashboard(), 30000);
+            }
+
+            async refreshDashboard() {
+                try {
+                    const response = await fetch(`${this.bridgeUrl}/health`);
+                    const data = await response.json();
+                    
+                    if (data.predictions) {
+                        this.updateDashboard(data.predictions);
+                    } else {
+                        this.showNoData();
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch prediction data:', error);
+                    this.showError();
+                }
+            }
+
+            updateDashboard(predictions) {
+                // Update monitoring status
+                document.getElementById('monitoring-status').textContent = 
+                    predictions.monitoring_active ? 'Active' : 'Inactive';
+                
+                // Update data points
+                const totalDataPoints = 
+                    (predictions.data_points?.memory_samples || 0) +
+                    (predictions.data_points?.cpu_samples || 0) +
+                    (predictions.data_points?.disk_samples || 0);
+                document.getElementById('data-points').textContent = totalDataPoints;
+                
+                // Update trends
+                if (predictions.trends) {
+                    document.getElementById('memory-trend').textContent = 
+                        `${predictions.trends.memory_growth_per_hour?.toFixed(1) || 0.0}%/hour`;
+                    document.getElementById('cpu-trend').textContent = 
+                        `${predictions.trends.cpu_trend_per_hour?.toFixed(1) || 0.0}%/hour`;
+                    document.getElementById('disk-trend').textContent = 
+                        `${predictions.trends.disk_growth_per_day?.toFixed(1) || 0.0}%/day`;
+                }
+                
+                // Update error patterns
+                if (predictions.error_frequency) {
+                    document.getElementById('error-count').textContent = 
+                        predictions.error_frequency.errors_last_hour || 0;
+                    document.getElementById('error-threshold').textContent = 
+                        `${predictions.error_frequency.threshold || 3}/hour`;
+                }
+                
+                // Update maintenance actions
+                if (predictions.last_actions) {
+                    const lastCleanup = predictions.last_actions.last_cleanup;
+                    document.getElementById('last-cleanup').textContent = 
+                        lastCleanup > 0 ? new Date(lastCleanup * 1000).toLocaleString() : 'Never';
+                    
+                    const cooldownRemaining = predictions.last_actions.cleanup_cooldown_remaining || 0;
+                    document.getElementById('cleanup-cooldown').textContent = 
+                        cooldownRemaining > 0 ? `${Math.round(cooldownRemaining / 60)} min` : 'Ready';
+                }
+                
+                // Update overall status
+                this.updateOverallStatus(predictions);
+                
+                // Update predictions
+                this.updatePredictions(predictions);
+                
+                // Update last analysis time
+                document.getElementById('last-analysis').textContent = new Date().toLocaleString();
+            }
+
+            updateOverallStatus(predictions) {
+                const statusIndicator = document.getElementById('overall-status');
+                
+                if (!predictions.monitoring_active) {
+                    statusIndicator.className = 'status-indicator status-critical';
+                    return;
+                }
+                
+                const memoryTrend = predictions.trends?.memory_growth_per_hour || 0;
+                const errorCount = predictions.error_frequency?.errors_last_hour || 0;
+                const errorThreshold = predictions.error_frequency?.threshold || 3;
+                
+                if (memoryTrend > 5 || errorCount >= errorThreshold) {
+                    statusIndicator.className = 'status-indicator status-warning';
+                } else {
+                    statusIndicator.className = 'status-indicator status-healthy';
+                }
+            }
+
+            updatePredictions(predictions) {
+                const container = document.getElementById('predictions-container');
+                container.innerHTML = '';
+                
+                const memoryTrend = predictions.trends?.memory_growth_per_hour || 0;
+                const diskTrend = predictions.trends?.disk_growth_per_day || 0;
+                const errorCount = predictions.error_frequency?.errors_last_hour || 0;
+                const errorThreshold = predictions.error_frequency?.threshold || 3;
+                
+                let hasPredictions = false;
+                
+                if (memoryTrend > 5) {
+                    const item = document.createElement('div');
+                    item.className = 'prediction-item warning';
+                    item.innerHTML = `<strong>Memory Growth Detected</strong><br>
+                        Growing at ${memoryTrend.toFixed(1)}%/hour - cleanup may be needed soon`;
+                    container.appendChild(item);
+                    hasPredictions = true;
+                }
+                
+                if (diskTrend > 10) {
+                    const item = document.createElement('div');
+                    item.className = 'prediction-item warning';
+                    item.innerHTML = `<strong>Disk Usage Growing</strong><br>
+                        Growing at ${diskTrend.toFixed(1)}%/day - disk cleanup recommended`;
+                    container.appendChild(item);
+                    hasPredictions = true;
+                }
+                
+                if (errorCount >= errorThreshold) {
+                    const item = document.createElement('div');
+                    item.className = 'prediction-item critical';
+                    item.innerHTML = `<strong>High Error Frequency</strong><br>
+                        ${errorCount} errors in last hour - system restart may be needed`;
+                    container.appendChild(item);
+                    hasPredictions = true;
+                }
+                
+                if (!hasPredictions) {
+                    const item = document.createElement('div');
+                    item.className = 'prediction-item';
+                    item.innerHTML = `<strong>No active predictions</strong><br>
+                        System is operating within normal parameters`;
+                    container.appendChild(item);
+                }
+            }
+
+            showNoData() {
+                document.getElementById('monitoring-status').textContent = 'No Data';
+                document.getElementById('overall-status').className = 'status-indicator status-warning';
+            }
+
+            showError() {
+                document.getElementById('monitoring-status').textContent = 'Error';
+                document.getElementById('overall-status').className = 'status-indicator status-critical';
+            }
+        }
+
+        // Initialize dashboard
+        const dashboard = new PredictiveDashboard();
+
+        // Global function for refresh button
+        function refreshDashboard() {
+            dashboard.refreshDashboard();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+name: Question
+description: Ask a question about LLM Hub usage, configuration, or development
+title: "[Question]: "
+labels: ["question", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question about LLM Hub? We're here to help! Please provide details so we can give you the best answer.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      description: Please confirm you have completed these steps
+      options:
+        - label: I have searched existing issues and discussions
+          required: true
+        - label: I have read the relevant documentation
+          required: true
+        - label: I have checked the [Troubleshooting Guide](https://github.com/your-org/llm-hub/blob/main/docs/TROUBLESHOOTING.md)
+          required: true
+
+  - type: dropdown
+    id: question_type
+    attributes:
+      label: Question Type
+      description: What type of question is this?
+      options:
+        - Installation and Setup
+        - Configuration
+        - Usage and Integration
+        - Development and Contributing
+        - Performance and Optimization
+        - Security
+        - Troubleshooting
+        - Architecture and Design
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+      placeholder: |
+        Please be as specific as possible. Include:
+        - What you're trying to achieve
+        - What you've already tried
+        - Where you're stuck
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context and Background
+      description: Provide context about your situation
+      placeholder: |
+        - What are you building or trying to accomplish?
+        - What's your experience level with LLM Hub?
+        - Any relevant background information
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment (if relevant)
+      description: Information about your setup
+      placeholder: |
+        - OS: Windows 11
+        - Docker Desktop Version: 4.25.0
+        - LM Studio Version: 0.2.9
+        - LLM Hub Version: 1.0.0
+        - Python Version: 3.11.5
+      value: |
+        - OS: 
+        - Docker Desktop Version: 
+        - LM Studio Version: 
+        - LLM Hub Version: 
+        - Python Version: 
+
+  - type: textarea
+    id: attempted_solutions
+    attributes:
+      label: What Have You Tried?
+      description: What solutions have you already attempted?
+      placeholder: |
+        - Documentation sections you've read
+        - Commands you've run
+        - Configuration changes you've made
+        - Error messages you've encountered
+
+  - type: textarea
+    id: expected_outcome
+    attributes:
+      label: Expected Outcome
+      description: What outcome are you hoping to achieve?
+      placeholder: |
+        Describe what success looks like for your use case.
+
+  - type: textarea
+    id: additional_info
+    attributes:
+      label: Additional Information
+      description: Any other relevant details
+      placeholder: |
+        - Code snippets (remove sensitive information)
+        - Configuration files (remove API keys)
+        - Screenshots
+        - Links to related resources
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: Urgency
+      description: How urgent is getting an answer to this question?
+      options:
+        - Low (general curiosity)
+        - Medium (would help with current work)
+        - High (blocking current work)
+        - Critical (production issue)
+
+  - type: checkboxes
+    id: help_others
+    attributes:
+      label: Community Benefit
+      description: Could this question help others?
+      options:
+        - label: This question might be useful for other users
+        - label: I'd be willing to help improve documentation based on the answer
+        - label: I'd be willing to share my solution with the community
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

@@ -1,0 +1,142 @@
+{
+  "name": "llm-hub",
+  "version": "1.0.0",
+  "description": "Zero-Configuration MCP Bridge for LM Studio",
+  "main": "docs/examples/javascript/basic_usage.js",
+  "type": "module",
+  "scripts": {
+    "start": "node docs/examples/javascript/basic_usage.js",
+    "test": "echo \"No JavaScript tests configured\" && exit 0",
+    "lint": "eslint docs/examples/javascript/ --ext .js",
+    "format": "prettier --write docs/examples/javascript/**/*.js docs/dashboard/**/*.html",
+    "validate": "npm run lint && npm run format:check",
+    "format:check": "prettier --check docs/examples/javascript/**/*.js docs/dashboard/**/*.html",
+    "docs:serve": "cd docs && python3 -m http.server 8000",
+    "dashboard": "cd docs/dashboard && python3 -m http.server 8001",
+    "health": "curl -f http://localhost:8080/health || echo 'Gateway not responding'",
+    "example:basic": "node docs/examples/javascript/basic_usage.js",
+    "docker:build": "docker-compose -f ops/compose/docker-compose.yml build",
+    "docker:start": "docker-compose -f ops/compose/docker-compose.yml up -d",
+    "docker:stop": "docker-compose -f ops/compose/docker-compose.yml down",
+    "docker:logs": "docker-compose -f ops/compose/docker-compose.yml logs -f"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/llm-hub.git"
+  },
+  "keywords": [
+    "llm",
+    "mcp",
+    "model-context-protocol",
+    "lm-studio",
+    "ai",
+    "machine-learning",
+    "bridge",
+    "gateway",
+    "api",
+    "javascript",
+    "nodejs"
+  ],
+  "author": "LLM Hub Contributors",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/your-org/llm-hub/issues"
+  },
+  "homepage": "https://github.com/your-org/llm-hub#readme",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-node": "^11.1.0",
+    "prettier": "^3.2.5"
+  },
+  "optionalDependencies": {
+    "node-fetch": "^3.3.2"
+  },
+  "files": [
+    "docs/examples/javascript/",
+    "docs/dashboard/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "directories": {
+    "doc": "docs",
+    "example": "docs/examples"
+  },
+  "config": {
+    "gateway_url": "http://localhost:8080",
+    "api_key": "changeme"
+  },
+  "eslintConfig": {
+    "env": {
+      "browser": true,
+      "node": true,
+      "es2022": true
+    },
+    "extends": [
+      "eslint:recommended",
+      "prettier"
+    ],
+    "parserOptions": {
+      "ecmaVersion": 2022,
+      "sourceType": "module"
+    },
+    "rules": {
+      "no-console": "off",
+      "no-unused-vars": [
+        "error",
+        {
+          "argsIgnorePattern": "^_"
+        }
+      ],
+      "prefer-const": "error",
+      "no-var": "error",
+      "object-shorthand": "error",
+      "prefer-arrow-callback": "error"
+    },
+    "globals": {
+      "fetch": "readonly",
+      "window": "readonly",
+      "document": "readonly"
+    }
+  },
+  "prettier": {
+    "semi": true,
+    "trailingComma": "es5",
+    "singleQuote": true,
+    "printWidth": 80,
+    "tabWidth": 2,
+    "useTabs": false,
+    "bracketSpacing": true,
+    "arrowParens": "avoid",
+    "endOfLine": "lf"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ],
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/your-org"
+  },
+  "contributors": [
+    {
+      "name": "LLM Hub Team",
+      "email": "team@llm-hub.dev",
+      "url": "https://github.com/your-org/llm-hub"
+    }
+  ],
+  "maintainers": [
+    {
+      "name": "LLM Hub Maintainers",
+      "email": "maintainers@llm-hub.dev"
+    }
+  ]
+}

@@ -1,0 +1,155 @@
+name: Bug Report
+description: Report a bug or unexpected behavior in LLM Hub
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug! Please fill out the information below to help us understand and reproduce the issue.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      description: Please confirm you have completed these steps
+      options:
+        - label: I have searched existing issues to ensure this is not a duplicate
+          required: true
+        - label: I have read the [Troubleshooting Guide](https://github.com/your-org/llm-hub/blob/main/docs/TROUBLESHOOTING.md)
+          required: true
+        - label: I am using a supported version of LLM Hub
+          required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is
+      placeholder: Describe what happened and what you expected to happen
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Detailed steps to reproduce the behavior
+      placeholder: |
+        1. Start LLM Hub with `start.bat`
+        2. Send request to '...'
+        3. See error
+      value: |
+        1. 
+        2. 
+        3. 
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen
+      placeholder: Describe the expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened
+      placeholder: Describe what actually happened
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which component is affected?
+      options:
+        - Gateway (unified-gateway)
+        - Bridge (lm-studio-bridge)
+        - Docker Compose
+        - Documentation
+        - Tests
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How severe is this bug?
+      options:
+        - Critical (system unusable)
+        - High (major functionality broken)
+        - Medium (some functionality affected)
+        - Low (minor issue or cosmetic)
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Information about your environment
+      placeholder: |
+        - OS: Windows 11
+        - Docker Desktop Version: 4.25.0
+        - LM Studio Version: 0.2.9
+        - LLM Hub Version: 1.0.0
+        - Python Version: 3.11.5
+      value: |
+        - OS: 
+        - Docker Desktop Version: 
+        - LM Studio Version: 
+        - LLM Hub Version: 
+        - Python Version: 
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and Error Messages
+      description: Relevant log output or error messages
+      placeholder: |
+        Paste relevant logs here. Use `docker-compose logs` to get service logs.
+        Remove any sensitive information like API keys.
+      render: shell
+
+  - type: textarea
+    id: configuration
+    attributes:
+      label: Configuration
+      description: Relevant configuration (remove sensitive data)
+      placeholder: |
+        Environment variables, docker-compose settings, etc.
+        **Remove API keys and other sensitive information**
+      render: yaml
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other context about the problem
+      placeholder: |
+        - Screenshots
+        - Related issues
+        - Workarounds you've tried
+        - Any other relevant information
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

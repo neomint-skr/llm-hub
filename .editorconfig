@@ -1,0 +1,166 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+# All files
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Python files
+[*.py]
+indent_size = 4
+max_line_length = 88
+
+# YAML files
+[*.{yml,yaml}]
+indent_size = 2
+
+# JSON files
+[*.json]
+indent_size = 2
+
+# JavaScript/TypeScript files
+[*.{js,jsx,ts,tsx}]
+indent_size = 2
+
+# HTML files
+[*.html]
+indent_size = 2
+
+# CSS/SCSS files
+[*.{css,scss,sass}]
+indent_size = 2
+
+# Shell scripts
+[*.{sh,bash}]
+indent_size = 2
+
+# Batch files (Windows)
+[*.{bat,cmd}]
+end_of_line = crlf
+indent_size = 2
+
+# Markdown files
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = 80
+
+# Docker files
+[{Dockerfile,Dockerfile.*}]
+indent_size = 2
+
+# Configuration files
+[*.{ini,cfg,conf,config}]
+indent_size = 2
+
+# XML files
+[*.xml]
+indent_size = 2
+
+# SQL files
+[*.sql]
+indent_size = 2
+
+# Makefile
+[{Makefile,makefile,*.mk}]
+indent_style = tab
+indent_size = 4
+
+# Go files
+[*.go]
+indent_style = tab
+indent_size = 4
+
+# Rust files
+[*.rs]
+indent_size = 4
+
+# C/C++ files
+[*.{c,cpp,h,hpp}]
+indent_size = 4
+
+# Java files
+[*.java]
+indent_size = 4
+
+# C# files
+[*.cs]
+indent_size = 4
+
+# PHP files
+[*.php]
+indent_size = 4
+
+# Ruby files
+[*.rb]
+indent_size = 2
+
+# Perl files
+[*.pl]
+indent_size = 4
+
+# R files
+[*.r]
+indent_size = 2
+
+# Swift files
+[*.swift]
+indent_size = 4
+
+# Kotlin files
+[*.kt]
+indent_size = 4
+
+# Scala files
+[*.scala]
+indent_size = 2
+
+# Clojure files
+[*.clj]
+indent_size = 2
+
+# Haskell files
+[*.hs]
+indent_size = 2
+
+# Erlang files
+[*.erl]
+indent_size = 4
+
+# Elixir files
+[*.ex]
+indent_size = 2
+
+# Lua files
+[*.lua]
+indent_size = 2
+
+# Vim files
+[*.vim]
+indent_size = 2
+
+# Emacs Lisp files
+[*.el]
+indent_size = 2
+
+# LaTeX files
+[*.tex]
+indent_size = 2
+
+# Terraform files
+[*.tf]
+indent_size = 2
+
+# Ansible files
+[*.{yml,yaml}]
+indent_size = 2
+
+# Kubernetes files
+[*.{yml,yaml}]
+indent_size = 2
